@@ -1,0 +1,260 @@
+% This is based on the LLNCS.DEM the demonstration file of % the LaTeX macro
+% package from Springer-Verlag for Lecture Notes in Computer Science,
+% version 2.4 for LaTeX2e as of 16. April 2010
+%
+% See http://www.springer.com/computer/lncs/lncs+authors?SGWID=0-40209-0-0-0
+% for the full guidelines.
+
+\documentclass{llncs}
+\usepackage{graphicx}
+\graphicspath{ {./assets/} }
+
+\usepackage{enumitem}
+\setlist[enumerate]{itemsep=2mm}
+
+\usepackage{dirtytalk}
+\usepackage{minted}
+\usepackage{amsmath}
+\usepackage{pdflscape}
+\usepackage[pass]{geometry}
+\usepackage[table]{xcolor}
+\usepackage{hhline}
+
+% Tables
+% --------
+\usepackage{booktabs} % much better tables
+\usepackage{multirow} % allows to fuse rows
+\usepackage{array}    % manipulate array
+\usepackage{tabularx} % better tables
+
+% Define new tabularx column types:
+%  - R: streteched right aligned
+%  - C: stretched centered
+%  - N: left aligned, specified space
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}%
+\newcolumntype{C}{>{\centering\arraybackslash}X}%
+\newcolumntype{N}[1]{>{\raggedleft\arraybackslash}p{#1}}
+
+% Set row height multiplicator to provide more breathing space
+\renewcommand{\arraystretch}{1.5}
+
+% Glossary
+% --------
+\usepackage[xindy,toc]{glossaries}
+\input{glossary.tex}
+\makeglossaries
+
+% Bibliography
+% --------
+% Use biber, with numeric style and no sorting (citation order)
+\usepackage[
+backend=biber,
+style=numeric,
+sorting=none,
+bibencoding=auto
+]{biblatex}
+\addbibresource{bibliography.bib}
+
+\pagestyle{plain}
+\setcounter{page}{1}
+\pagenumbering{arabic}
+
+\begin{document}
+
+\title{Payment Channels Analysis, a Practical Approach}
+% \author{Jo\"el Gugger\inst{1} \and Thomas Shababi\inst{2} \and Daniel
+% Lebrecht\inst{2}}
+\author{Jo\"el Gugger\inst{1}}
+\authorrunning{Jo\"el Gugger et al.}
+% \tocauthor{Jo\"el Gugger, Thomas~S.~Shababi, and Daniel Lebrecht}
+\tocauthor{Jo\"el Gugger}
+% \subtitle{{\normalsize\today{\small\ -- DRAFT}}}
+% \institute{HES-SO Master, Lausanne, Switzerland\\
+% \email{joel.gugger@master.hes-so.ch} \and DigiThink, Neuch\^atel, Switzerland
+% \\ \email{info@digithink.ch} }
+\institute{HES-SO Master, Lausanne, Switzerland\\
+\email{joel.gugger@master.hes-so.ch}}
+
+\maketitle
+
+\begin{abstract} Payment channels or micropayment channels, as mentioned previously, are one part of the scalability solution. The idea of payment channels was suggested by Satoshi in an email to Mike Hearn. Since then, various schemes to construct such structures have been proposed. To have a better understanding of the differences between various channel schemes, and to be able to analyze a channel scheme objectively, a few formal definitions are needed. A list of formal definitions for payment channel construction is proposed. An analysis of different commonly exposed payment channel constructions is done following these definitions. The list does not contain all the payment channel schemes, some of them might be missing. However, the list contains a fairly good representation of the different existing constructions.
+  \keywords{Payment channels, State channels, Bitcoin}
+\end{abstract}
+
+\section{Introduction}
+
+% -----------------------------------------------------------------------------
+\section{Formal definitions}
+
+These formal definitions specify the necessary and sufficient conditions for a payment channel to be qualified as a member of a specific set. They set boundaries or limits that separate the term from any other term. The following formal definitions qualify properties that micropayment channels based on a blockchain such as Bitcoin can have with the view of a particular player.  Transactions represent a set of information with a special meaning for the given blockchain that modify the channel state. A transaction can be broadcast to the network to effectively affect the on chain channel state or been kept by the player. Players are users of the given blockchain and they own funds. Funds are owned by one and only one player at a time. The meaning of owning an amount of funds in a channel for a given player is defined as holding a transaction not yet broadcast that allows this player to claim this amount of funds.
+
+A channel is composed of $n$ players $\mathcal{P} = \{\mathcal{P}_0, \dots, \mathcal{P}_n\}$. We denote a channel going from player $p_1$ to $p_2$, where $p_1, p_2 \in \mathcal{P}$, with $p_1 \rightarrow p_2$ if $p_1$ can send money through the channel to $p_2$. Channels have states and it is possible to move from one state to another with $\mathcal{S}$ steps.
+
+\begin{definition}[Trustless] A channel is trustless for a player $p_i \in \mathcal{P}$ if and only if the safety of his funds at each step $\mathcal{S}$ of the protocol does not depend on the behavior of players $\mathcal{P}' = \{\, p' \, | \, p' \neq p_i \, \}$.
+\end{definition}
+
+\begin{definition}[Optimal] A channel is optimal for a player $p_i \in \mathcal{P}$ if and only if the number of transactions $\mathcal{T}(\mathcal{C})$ needed to claim the funds for a given constraint $\mathcal{C}$ is equal to the number of moves $\mathcal{M}(\mathcal{C})$ needed to satisfy the constraint at any time.
+\end{definition}
+
+For example, for a refund constraint $\mathcal{C}$ in a channel $p_1 \rightarrow p_2$, refunding $p_1$ requires $\mathcal{M}(\mathcal{C}) = 1$, thus an optimal scheme requires $\mathcal{T}(\mathcal{C}) = \mathcal{M}(\mathcal{C}) = 1$.
+
+\begin{definition}[Open-ended] A channel is open-ended for a player $p_i \in \mathcal{P}$ if and only if there is no predetermined channel lifetime at the setup.
+\end{definition}
+
+A channel that is not open-ended can have a refresh mechanism on-chain with a designated transaction before the end of the lifetime.
+
+\begin{definition}[Undelayed] A channel is undelayed for a player $p_i \in \mathcal{P}$ if and only if this player can broadcast his set of transactions at any time.
+\end{definition}
+
+\begin{definition}[Non-interactive] A channel is non-interactive for a player $p_i \in \mathcal{P}$ if and only if this player does not have the responsibility to watch the targeted blockchain to react on arbitrary events $\mathcal{E}$ in order to guarantee his safety.
+\end{definition}
+
+With these five definitions, it is possible to infer a significant necessary corollary. If a channel is undelayed for a player this player can broadcast his latest state without constraint, and if this channel is also optimal for the same player only one transaction is needed to move the funds. If only one transaction is needed to move the funds, then the funds are directly available for this player. If the funds are available instantly, then the channel is instantaneous for the player.
+
+\begin{corollary}[Instantaneous] A channel is instantaneous for a player $p_i \in \mathcal{P}$ if and only if the channel is undelayed and optimal for this player.
+\end{corollary}
+
+\subsection{Types of payment channels}
+
+We can distinguish two type of channels, unidirectional channels that allow one user to send money to another user and bidirectional channels that allow two users to send in either direction. Usually, a bidirectional channel is more optimal than two unidirectional channels but introduces other constraints.
+
+\subsubsection{Unidirectional}
+
+In a two-player unidirectional channel, there is a payer, later referred to as player-one or client, and a payee, later referred to as player-two or provider.  It is not possible to transfer money back in the reverse direction in the channel. These channels are asymmetric, each player benefits from different channel properties. The analysis must be done in the view of each player $p_i \in \mathcal{P} = \{\mathcal{P}_0, \dots, \mathcal{P}_n\}$ at a time.
+
+\subsubsection{Bidirectional}
+
+In a two-player bidirectional channel $\mathcal{C}$, the player $A$ and the player $B$ can send funds in direction $\mathcal{C}_{AB}$ and $\mathcal{C}_{BA}$. A bidirectional channel can be a specific scheme or a pairing of existing unidirectional channels. These channels are generaly symmetric, each player $p_i \in \mathcal{P} = \{\mathcal{P}_0, \dots, \mathcal{P}_n\}$ benefits from the same channel properties.
+
+% -----------------------------------------------------------------------------
+\section{Analysis of payment channels}
+
+\subsection{Spilman-style payment channels}
+
+Spilman-style payment channels, proposed by Jeremy Spilman in 2013 \cite{SpilmanStyle}, are the most simple construction of a unidirectional payment channel. They have a finite lifetime predefined at the setup phase and the client, i.e., the payer, cannot trigger their refund before the end of the channel lifetime (but he can receive his funds back if the payee settles the channel before the end of the lifetime.) The channel is one-time use. When the payer or the payee get their funds, the channel is closing. Neither the payer nor the payee need to watch the blockchain to react to events during the lifetime of the channel because only the payee can broadcast a transaction, so both do not need to watch the blockchain to be safe. It is worth noting that, without a proper fix to transaction malleability \cite{SegWitBIP, BIP62, DBLP:journals/corr/AndrychowiczDMM13, DBLP:journals/corr/DeckerW14}, this scheme is not secure.
+
+\begin{table}[h]
+  \begin{tabularx}{\textwidth}{ | X | l | l | l | l | l |}
+  \hline
+  Player & Trustless & Optimal & Open-ended & Undelayed & Non-interactive \\
+  \hline \hline
+  Payer & Yes & Yes & No & No & Yes \\ \hline
+  Payee & Yes & Yes & No & Yes & Yes \\
+  \hline
+  \end{tabularx}
+  \caption{Summary of Spilman-style payment channel properties}
+  \label{fig:summarySpilmanPaymentChannel}
+\end{table}
+
+According to the previous definitions, Spilman-style ephemeral payment channels are instantaneous non-interactive channels for the payee, and optimal non-interactive for the payer.
+
+\subsection{\texttt{CLTV}-style payment channels}
+
+Introduced in 2015, \texttt{CLTV}-style payment channels are a solution to the malleability problem in Spilman-style payment channels. With the new \texttt{OP\_CODE} check locktime verify (\texttt{OP\_CHECKLOCKTIMEVERIFY}), redefining the \texttt{OP\_NOP2}, it is possible to enforce the non-spending of a transaction output until some time in the future. With \texttt{OP\_CHECKLOCKTIMEVERIFY} a transaction output can enforce the spending transaction to have a \texttt{nLockTime} later or equal to the specified value in the script \cite{BIP65}.
+
+Instead of creating a funding transaction and a refund transaction vulnerable to transaction malleability attacks, the client creates the funding transaction output with a script (Listing~\ref{lst:scriptPubKeyCLTV}) that allows the provider and the client to spend the funds with co-operation or after a lock time the client can spend the funds without the co-operation of the provider.
+
+\begin{listing}
+  \begin{minted}[breaklines=true,fontsize=\scriptsize]{text}
+IF
+    <provider pubkey> CHECKSIGVERIFY
+ELSE
+    <expiry time> CHECKLOCKTIMEVERIFY DROP
+ENDIF
+<client pubkey> CHECKSIG
+  \end{minted}
+  \caption{Locking script (scriptPubKey) with \texttt{CHECKLOCKTIMEVERIFY}}
+  \label{lst:scriptPubKeyCLTV}
+\end{listing}
+
+\texttt{CLTV}-style payment channels have the same properties as Spilman-style payment channels following the previous definitions but are not subject to transaction malleability attacks.
+
+\subsection{Decker-Wattenhofer duplex payment channels}
+
+Decker-Wattenhofer duplex payment channels \cite{Decker2015fast}, also called \gls{dmc}, proposed in 2015, are bidirectional channels based on pairs of Spilman-style unidirectional channels. The construction has a finite lifetime predefined at the setup phase but can be refreshed on-chain to keep the channel open with an updated state. During the refresh process, it is possible to refill the channel, and the scheme allows payment routing with \gls{htlc}.
+
+\gls{dmc} payment channels are not optimal. Uncooperative closing of the channel requires $d + 2$ transactions (where $d$ is equal to the revocation tree depth).  They are not undelayed, without other players cooperation the funds are recovered after \texttt{nLockTime} values. \gls{dmc} are not open-ended, a dedicated transaction needs to be broadcast before the end of the \texttt{nLockTime}.
+
+\begin{table}[h]
+  \begin{tabularx}{\textwidth}{ | X | l | l | l | X |}
+  \hline
+  Trustless & Optimal & Open-ended & Undelayed & Non-interactive \\
+  \hline \hline
+  Yes & No & (Yes) & No & No \\
+  \hline
+  \end{tabularx}
+  \caption{Summary of Decker-Wattenhofer duplex payment channel properties}
+  \label{fig:summaryDeckerWattenhoferPaymentChannel}
+\end{table}
+
+\subsection{Poon-Dryja payment channels}
+
+Poon-Dryja payment channels, also called Lightning Network, is a proposed implementation of \gls{htlc} with bidirectional payment channels which allow payments to be securely routed across multiple peer-to-peer payment channels \cite{poon2016bitcoin}.
+
+\begin{table}[h]
+  \begin{tabularx}{\textwidth}{ | X | l | l | l | X |}
+  \hline
+  Trustless & Optimal & Open-ended & Undelayed & Non-interactive \\
+  \hline \hline
+  Yes & No & Yes & Yes & No \\
+  \hline
+  \end{tabularx}
+  \caption{Summary of Poon-Dryja payment channel properties}
+  \label{fig:summaryPoonDryjaPaymentChannel}
+\end{table}
+
+Their scheme is trustless (assuming that \gls{segwit} has been implemented), open-ended, and undelayed but not optimal when the channel closes without co-operation nor non-interactive.
+
+\subsection{Summary}
+
+\begin{table}[h]
+  \begin{tabularx}{\textwidth}{ | X | l | l | l | l | l |}
+  \hline
+  Channel & Type & Optimal & Open-ended & Undelayed & Non-inter. \\
+  \hline \hline
+  Spilman-style & Uni & Yes/Yes & No/No & No/Yes & Yes/Yes \\ \hline
+  CLTV-style & Uni & Yes/Yes & No/No & No/Yes & Yes/Yes \\ \hline
+  Decker-Wattenhofer \gls{dmc} & Bi & No & (Yes) & No & No \\ \hline
+  Poon-Dryja & Bi & No & Yes & Yes & No \\ \hline
+  Shababi-Gugger-Lebrecht & Uni & No/Yes & Yes/Yes & No/Yes & Yes/No \\
+  \hline
+  \end{tabularx}
+  \caption{Summary of different payment channels}
+  \label{fig:summaryPaymentChannel}
+\end{table}
+
+This table summarizes the different properties of the proposed definitions of common channel schemes. The last row refers to the next presented scheme.
+
+% -----------------------------------------------------------------------------
+\section{One-way channel (Shababi-Gugger-Lebrecht)}
+
+Our one-way payment channel for Bitcoin is a modified version of other layer-two applications, such as \say{Yours Lightning Protocol} or Lightning Network \cite{poon2016bitcoin, YoursLightningProtocol}. The scheme is specially designed for a client to provider scenario, where the provider has multiple clients through multiple channels. The core design aims to be as cheap as possible for the provider while being flexible for settlement. The white paper \say{Partially Non-Interactive and Instantaneous One-way Payment Channel for Bitcoin} inserted after the appendices, describes the core design and the incentives.
+
+\begin{table}[h]
+  \begin{tabularx}{\textwidth}{ | X | l | l | l | l | l |}
+  \hline
+  Player & Trustless & Optimal & Open-ended & Undelayed & Non-interactive \\
+  \hline \hline
+  Payer & Yes & No & Yes & No & Yes \\ \hline
+  Payee & Yes & Yes & Yes & Yes & No \\
+  \hline
+  \end{tabularx}
+  \caption{Summary of Shababi-Gugger-Lebrecht payment channel properties}
+  \label{fig:summaryShababiGuggerLebrechtPaymentChannel}
+\end{table}
+
+A part of this thesis was devoted to writing the white paper describing our channel scheme while working on the scheme itself. During this work we found a possible attack described in the white paper which we fixed.
+
+The next step has been to analyze how it is possible to optimize the channel with threshold cryptography. As it is possible to see, every channel construction depends on a funding transaction that locks funds in a 2-out-of-2 multi-signature script. This funding transaction is always on-chain, so if it is possible to replace this \gls{p2sh} with a standard \gls{p2pkh} output the savings should be attractive.
+
+%
+% ---- Bibliography ----
+%
+\printbibliography
+
+%
+% ---- Glossary ----
+%
+\printglossaries
+
+\end{document}

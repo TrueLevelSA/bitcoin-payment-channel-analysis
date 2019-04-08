@@ -13,6 +13,7 @@ all : ${PDFFILE}
 ${PDFFILE} : ${TEXFILE}
 	${TEX} ${NAME}
 	${BIB} ${NAME}
+	${GLO} ${NAME}
 	${TEX} ${NAME}
 	${TEX} ${NAME}
 

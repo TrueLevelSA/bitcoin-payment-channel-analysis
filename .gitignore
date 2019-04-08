@@ -47,3 +47,6 @@ _minted-paper/
 
 # Minted
 _minted*
+
+
+auto-compile.sh

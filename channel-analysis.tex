@@ -207,18 +207,18 @@ Introduced in 2015, \texttt{CLTV}-style payment channels offer a solution to the
 
 Instead of creating a funding transaction and a refund transaction vulnerable to transaction malleability attacks, the client creates the funding transaction output with a script (Listing~\ref{lst:scriptPubKeyCLTV}) that allows the provider and the client to spend the funds with co-operation or after a lock time the client can spend the funds without the co-operation of the provider.
 
-\begin{listing}[ht]
-  \begin{minted}[breaklines=true,fontsize=\scriptsize]{text}
-IF
-    <provider pubkey> CHECKSIGVERIFY
-ELSE
-    <expiry time> CHECKLOCKTIMEVERIFY DROP
-ENDIF
-<client pubkey> CHECKSIG
-  \end{minted}
-  \caption{Locking script (scriptPubKey) with \texttt{CHECKLOCKTIMEVERIFY}}
-  \label{lst:scriptPubKeyCLTV}
-\end{listing}
+%\begin{listing}[ht]
+%  \begin{minted}[breaklines=true,fontsize=\scriptsize]{text}
+%IF
+%    <provider pubkey> CHECKSIGVERIFY
+%ELSE
+%    <expiry time> CHECKLOCKTIMEVERIFY DROP
+%ENDIF
+%<client pubkey> CHECKSIG
+%  \end{minted}
+%  \caption{Locking script (scriptPubKey) with \texttt{CHECKLOCKTIMEVERIFY}}
+%  \label{lst:scriptPubKeyCLTV}
+%\end{listing}
 
 \texttt{CLTV}-style payment channels have the same properties as Spilman-style payment channels but require \texttt{OP\_CHECKLOCKTIMEVERIFY}.
 
@@ -290,8 +290,9 @@ We designed an unidirectional channel with these specific properties because we 
 \section{Summary}
 
 We summarize the different properties of the proposed definitions of common Bitcoin channel schemes.
+We denote Decker-Wattenhofer channels as opend-end in parentheses because an on-chain refresh mechanism exists.
 
-\begin{table}[ht]
+\begin{table}[H]
   \begin{tabularx}{\textwidth}{ | X | l | l | l | l | l |}
   \hline
   Channel & Type & Optimal & Open-ended & Undelayed & Non-inter. \\
@@ -307,9 +308,7 @@ We summarize the different properties of the proposed definitions of common Bitc
   \label{fig:summaryPaymentChannel}
 \end{table}
 
-We denote Decker-Wattenhofer channels as opend-end in parentheses because an on-chain refresh mechanism exists.
-
-\section{Conclusion}
+%\section{Conclusion}
 
 %\subsection{Further research}
 %As it is possible to see, every channel construction depends on a funding transaction that locks funds in a 2-out-of-2 multi-signature script. This funding transaction is always on-chain, so if it is possible to replace this \gls{p2sh} with a standard \gls{p2pkh} output the savings should be attractive.
